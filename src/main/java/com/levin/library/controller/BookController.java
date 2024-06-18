@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
 
+@CrossOrigin(origins = "*", allowedHeaders = "*")
 @RestController
 @RequestMapping("/book")
 public class BookController {
@@ -20,13 +21,13 @@ public class BookController {
     @Autowired
     private BookService bookService;
 
-    @PostMapping("/book")
+    @PostMapping()
     public ResponseEntity<Book> saveBook(@RequestBody Book book) {
         Book savedBook = bookService.saveBook(book);
         return ResponseEntity.ok(savedBook);
     }
 
-    @GetMapping("/book")
+    @GetMapping()
     public ResponseEntity<Page<Book>> fetchAllBooks(@RequestParam(defaultValue = "0") int page,
                                           @RequestParam(defaultValue = "10") int size) {
         try {
@@ -37,21 +38,21 @@ public class BookController {
         }
     }
 
-    @GetMapping("/book/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<Book> getBookById(@PathVariable Long id) {
         Optional<Book> bookOptional = bookService.fetchBookById(id);
         return bookOptional.map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @PutMapping(path = "/book/{bookId}")
-    public ResponseEntity<Book> updateBook(@PathVariable Long id, @RequestBody Book book) {
-        Optional<Book> updatedBookOptional = bookService.updateBook(id, book);
+    @PutMapping(path = "/{bookId}")
+    public ResponseEntity<Book> updateBook(@PathVariable Long bookId, @RequestBody Book book) {
+        Optional<Book> updatedBookOptional = bookService.updateBook(bookId, book);
         return updatedBookOptional.map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @DeleteMapping(value = "/book/{bookId}")
+    @DeleteMapping(value = "/{bookId}")
     public ResponseEntity<String> deleteBook(@PathVariable Long id) {
         boolean deletionStatus = bookService.deleteBook(id);
         if (deletionStatus) {

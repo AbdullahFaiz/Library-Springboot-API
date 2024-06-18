@@ -1,5 +1,6 @@
 package com.levin.library.service;
 
+import com.levin.library.modal.Author;
 import com.levin.library.modal.Book;
 import com.levin.library.repository.BookRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,10 +16,17 @@ public class BookService {
     
     @Autowired
     private BookRepository bookRepository;
-
+    @Autowired
+    private AuthorService authorService;
     public Book saveBook(Book book){
         try {
-            return bookRepository.save(book);
+            Optional<Author> bookAuthorOptional = authorService.fetchAuthorById(book.getAuthor().getAuthorId());
+            if (bookAuthorOptional.isPresent()) {
+                book.setAuthor(bookAuthorOptional.get());
+                return bookRepository.save(book);
+            } else {
+                throw new RuntimeException("Author not found for ID: " + book.getAuthor().getAuthorId());
+            }
         }catch (Exception ex){
             throw new RuntimeException("Failed to save Book: "+ ex.getMessage() );
         }
@@ -47,14 +55,23 @@ public class BookService {
                 Book existingBook = existingBookOptional.get();
                 existingBook.setName(updatedBook.getName());
                 existingBook.setIsbn(updatedBook.getIsbn());
-                existingBook.setAuthor(updatedBook.getAuthor());
+
+
+                Long authorId = updatedBook.getAuthor().getAuthorId();
+                Optional<Author> authorOptional = authorService.fetchAuthorById(authorId);
+                if (authorOptional.isPresent()) {
+                    existingBook.setAuthor(authorOptional.get());
+                } else {
+                    throw new RuntimeException("Author not found for ID: " + authorId);
+                }
+
                 Book savedEntity = bookRepository.save(existingBook);
                 return Optional.of(savedEntity);
             } else {
                 return Optional.empty();
             }
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to update book: " + e.getMessage());
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Failed to update book: " + e.getMessage(), e);
         }
     }
 
